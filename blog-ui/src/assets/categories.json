@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Technology",
+    "description": "Posts related to software development, programming, and tech trends"
+  },
+  {
+    "name": "Lifestyle",
+    "description": "Content about daily life, habits, productivity, and personal growth"
+  },
+  {
+    "name": "Travel",
+    "description": "Stories, guides, and tips about traveling around the world"
+  },
+  {
+    "name": "Food",
+    "description": "Recipes, restaurant reviews, and culinary experiences"
+  },
+  {
+    "name": "Gaming",
+    "description": "News, reviews, and commentary about video games and esports"
+  }
+]
