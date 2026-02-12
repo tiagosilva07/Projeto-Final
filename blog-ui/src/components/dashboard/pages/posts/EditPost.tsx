@@ -11,6 +11,7 @@ import { MultiSelect } from "@/components/MultiSelect";
 import { uploadImage } from "@/services/cloudinary";
 import { ImageUploader } from "@/components/ImageUploader";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import type { Category } from "@/types/categoy";
 
 export default function EditPost() {
@@ -36,6 +37,11 @@ export default function EditPost() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [errors, setErrors] = useState({
+    title: "",
+    content: "",
+    categoryIds: "",
+  });
 
   // Load post + categories
   useEffect(() => {
@@ -87,7 +93,42 @@ export default function EditPost() {
     }
   }
 
+  function validateForm(): boolean {
+    const newErrors = {
+      title: "",
+      content: "",
+      categoryIds: "",
+    };
+
+    // Title validation (3-500 characters)
+    if (!form.title.trim()) {
+      newErrors.title = "Title is required";
+    } else if (form.title.trim().length < 3) {
+      newErrors.title = "Title must be at least 3 characters";
+    } else if (form.title.trim().length > 500) {
+      newErrors.title = "Title must not exceed 500 characters";
+    }
+
+    // Content validation
+    if (!form.content.trim()) {
+      newErrors.content = "Content is required";
+    }
+
+    // Category validation (at least one category required)
+    if (form.categoryIds.length === 0) {
+      newErrors.categoryIds = "Please select at least one category";
+    }
+
+    setErrors(newErrors);
+    return !newErrors.title && !newErrors.content && !newErrors.categoryIds;
+  }
+
   async function handleSubmit(status: "DRAFT" | "PUBLISHED") {
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors");
+      return;
+    }
+
     setSaving(true);
     setError("");
 
@@ -104,13 +145,16 @@ export default function EditPost() {
 
       await updatePost(Number(id), postData);
       await refreshPosts(); // Refresh posts context
+      toast.success(`Post ${status === "DRAFT" ? "saved as draft" : "updated and published"} successfully!`);
       
       // Navigate back to where the user came from (admin or regular posts)
       const from = location.state?.from || "/dashboard/posts";
       navigate(from);
     } catch (err) {
       console.error(err);
-      setError("Failed to update post");
+      const errorMsg = "Failed to update post";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -125,34 +169,57 @@ export default function EditPost() {
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
       <div className="space-y-4">
-        <input
-          type="text"
-          name="title"
-          placeholder="Post title"
-          className="w-full p-3 border rounded"
-          value={form.title}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, title: e.target.value }))
-          }
-        />
+        <div>
+          <input
+            type="text"
+            name="title"
+            placeholder="Post title (3-500 characters)"
+            className="w-full p-3 border rounded"
+            value={form.title}
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, title: e.target.value }));
+              setErrors((prev) => ({ ...prev, title: "" }));
+              setError("");
+            }}
+          />
+          {errors.title && (
+            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+          )}
+          <p className="text-xs text-gray-500 mt-1">
+            {form.title.length}/500 characters
+          </p>
+        </div>
 
-        <textarea
-          name="content"
-          placeholder="Write your content here..."
-          className="w-full p-3 border rounded h-64"
-          value={form.content}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, content: e.target.value }))
-          }
-        />
+        <div>
+          <textarea
+            name="content"
+            placeholder="Write your content here..."
+            className="w-full p-3 border rounded h-64"
+            value={form.content}
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, content: e.target.value }));
+              setErrors((prev) => ({ ...prev, content: "" }));
+              setError("");
+            }}
+          />
+          {errors.content && (
+            <p className="text-red-500 text-sm mt-1">{errors.content}</p>
+          )}
+        </div>
 
-        <MultiSelect
-          options={categories}
-          selected={form.categoryIds}
-          onChange={(value) =>
-            setForm((prev) => ({ ...prev, categoryIds: value }))
-          }
-        />
+        <div>
+          <MultiSelect
+            options={categories}
+            selected={form.categoryIds}
+            onChange={(value) => {
+              setForm((prev) => ({ ...prev, categoryIds: value }));
+              setErrors((prev) => ({ ...prev, categoryIds: "" }));
+            }}
+          />
+          {errors.categoryIds && (
+            <p className="text-red-500 text-sm mt-1">{errors.categoryIds}</p>
+          )}
+        </div>
 
         <ImageUploader
           previewUrl={form.imagePreview}

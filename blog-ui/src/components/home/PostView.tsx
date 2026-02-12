@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 export default function PostView({ hideHomeNav = false }: { hideHomeNav?: boolean }) {
   const { id } = useParams();
@@ -29,6 +30,7 @@ export default function PostView({ hideHomeNav = false }: { hideHomeNav?: boolea
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editCommentContent, setEditCommentContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState("");
 
   useEffect(() => {
     async function loadPost() {
@@ -100,11 +102,29 @@ export default function PostView({ hideHomeNav = false }: { hideHomeNav?: boolea
   }, [id]);
 
   async function handleCreateComment() {
-    if (!newComment.trim() || !id) return;
+    if (!id) return;
     const postId = Number(id);
     if (Number.isNaN(postId)) return;
 
+    // Validation
+    if (!newComment.trim()) {
+      setCommentError("Comment cannot be empty");
+      return;
+    }
+
+    if (newComment.trim().length < 3) {
+      setCommentError("Comment must be at least 3 characters");
+      return;
+    }
+
+    if (newComment.trim().length > 500) {
+      setCommentError("Comment must not exceed 500 characters");
+      return;
+    }
+
     setSubmitting(true);
+    setCommentError("");
+    
     try {
       const comment = await createComment(postId, { content: newComment });
       setComments((prev) => {
@@ -115,20 +135,37 @@ export default function PostView({ hideHomeNav = false }: { hideHomeNav?: boolea
         );
       });
       setNewComment("");
+      toast.success("Comment posted successfully!");
       // Refresh posts to update comment counts in home page
       await refreshPosts();
     } catch (err) {
       console.error("Failed to create comment", err);
-      alert("Failed to create comment");
+      toast.error("Failed to post comment. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleUpdateComment(commentId: number) {
-    if (!editCommentContent.trim() || !id) return;
+    if (!id) return;
     const postId = Number(id);
     if (Number.isNaN(postId)) return;
+
+    // Validation
+    if (!editCommentContent.trim()) {
+      toast.error("Comment cannot be empty");
+      return;
+    }
+
+    if (editCommentContent.trim().length < 3) {
+      toast.error("Comment must be at least 3 characters");
+      return;
+    }
+
+    if (editCommentContent.trim().length > 500) {
+      toast.error("Comment must not exceed 500 characters");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -141,11 +178,12 @@ export default function PostView({ hideHomeNav = false }: { hideHomeNav?: boolea
       );
       setEditingCommentId(null);
       setEditCommentContent("");
+      toast.success("Comment updated successfully!");
       // Refresh posts to update comment data in home page
       await refreshPosts();
     } catch (err) {
       console.error("Failed to update comment", err);
-      alert("Failed to update comment");
+      toast.error("Failed to update comment. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -166,11 +204,12 @@ export default function PostView({ hideHomeNav = false }: { hideHomeNav?: boolea
         await deleteComment(postId, commentId);
       }
       setComments((prev) => prev.filter((c) => c.id !== commentId));
+      toast.success("Comment deleted successfully!");
       // Refresh posts to update comment counts in home page
       await refreshPosts();
     } catch (err) {
       console.error("Failed to delete comment", err);
-      alert("Failed to delete comment");
+      toast.error("Failed to delete comment. Please try again.");
     }
   }
 
@@ -276,14 +315,25 @@ export default function PostView({ hideHomeNav = false }: { hideHomeNav?: boolea
           <Card>
             <CardContent className="pt-6">
               <Textarea
-                placeholder="Write a comment..."
+                placeholder="Write a comment (3-500 characters)..."
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="mb-3"
+                onChange={(e) => {
+                  setNewComment(e.target.value);
+                  setCommentError("");
+                }}
+                className="mb-2"
               />
+              {commentError && (
+                <p className="text-red-500 text-sm mb-2">{commentError}</p>
+              )}
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-muted-foreground">
+                  {newComment.length}/500 characters
+                </p>
+              </div>
               <Button
                 onClick={handleCreateComment}
-                disabled={submitting || !newComment.trim()}
+                disabled={submitting}
               >
                 {submitting ? "Posting..." : "Post Comment"}
               </Button>
@@ -323,12 +373,16 @@ export default function PostView({ hideHomeNav = false }: { hideHomeNav?: boolea
                         <Textarea
                           value={editCommentContent}
                           onChange={(e) => setEditCommentContent(e.target.value)}
+                          placeholder="Edit your comment (3-500 characters)..."
                         />
+                        <p className="text-xs text-muted-foreground">
+                          {editCommentContent.length}/500 characters
+                        </p>
                         <div className="flex gap-2">
                           <Button
                             size="sm"
                             onClick={() => handleUpdateComment(comment.id)}
-                            disabled={submitting || !editCommentContent.trim()}
+                            disabled={submitting}
                           >
                             {submitting ? "Saving..." : "Save"}
                           </Button>

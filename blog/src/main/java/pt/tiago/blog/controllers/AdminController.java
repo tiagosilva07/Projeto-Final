@@ -82,7 +82,6 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
     public ResponseEntity<List<AdminUserViewDTO>> getUsers() {
-
         return new ResponseEntity<>(adminService.getUsers(),HttpStatus.OK);
     }
 }

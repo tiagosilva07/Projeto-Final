@@ -124,7 +124,7 @@ export function useAdminApi() {
   }
 
   async function deleteCategory(categoryId: number): Promise<void> {
-    return safeApiFetch(`${API_URL}/admin/categories/${categoryId}`, {
+    return safeApiFetch(`${API_URL}/categories/${categoryId}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
     });

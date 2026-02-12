@@ -11,10 +11,16 @@ import { useNavigate } from "react-router-dom"
 export default function Login() {
   const { login } = useAuth()
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate();
     
- const [form, setForm] = useState<LoginRequest>({
+  const [form, setForm] = useState<LoginRequest>({
+    username: "",
+    password: "",
+  })
+
+  const [errors, setErrors] = useState({
     username: "",
     password: "",
   })
@@ -22,17 +28,48 @@ export default function Login() {
   function handleUpdateField(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target
     setForm({ ...form, [name]: value })
+    // Clear field error when user starts typing
+    setErrors({ ...errors, [name]: "" })
+    setError("")
+  }
+
+  function validateForm(): boolean {
+    const newErrors = {
+      username: "",
+      password: "",
+    }
+
+    if (!form.username.trim()) {
+      newErrors.username = "Username is required"
+    }
+
+    if (!form.password.trim()) {
+      newErrors.password = "Password is required"
+    }
+
+    setErrors(newErrors)
+    return !newErrors.username && !newErrors.password
   }
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
+    
+    if (!validateForm()) {
+      return
+    }
+
+    setLoading(true)
+    setError("")
+    
     try {
-        const response = await loginRequest(form);
+      const response = await loginRequest(form);
       if (!response.token || !response.username) throw new Error("Login failed")
       login(response.token, response.refreshToken, response.username, response.role)
       navigate("/dashboard");
     } catch {
       setError("Invalid username or password")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -57,8 +94,10 @@ export default function Login() {
                 placeholder="Enter your username"
                 value={form.username}
                 onChange={handleUpdateField}
-                required
               />
+              {errors.username && (
+                <p className="text-red-500 text-sm">{errors.username}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -70,16 +109,18 @@ export default function Login() {
                 placeholder="••••••••••"
                 value={form.password}
                 onChange={handleUpdateField}
-                required
               />
+              {errors.password && (
+                <p className="text-red-500 text-sm">{errors.password}</p>
+              )}
             </div>
 
             {error && (
               <div className="text-red-500 text-sm text-center">{error}</div>
             )}
 
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
             </Button>
 
             <Separator />

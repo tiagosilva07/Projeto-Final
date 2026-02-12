@@ -85,8 +85,18 @@ export default function AdminCategories() {
       // Refresh to update counts
       await loadCategories();
     } catch (error) {
-      toast.error("Failed to delete category");
       console.error(error);
+      // Check if it's a constraint violation error
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("constraint") || errorMessage.includes("Referential integrity")) {
+        const postCount = categoryToDelete.postCount ?? 0;
+        toast.error(
+          `Cannot delete this category because it's being used by ${postCount} post${postCount !== 1 ? 's' : ''}. Please remove it from all posts first.`,
+          { duration: 5000 }
+        );
+      } else {
+        toast.error("Failed to delete category");
+      }
     } finally {
       setDeleting(false);
     }
@@ -226,8 +236,17 @@ export default function AdminCategories() {
           <DialogHeader>
             <DialogTitle>Delete Category</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{categoryToDelete?.name}"? This action cannot be
-              undone and may affect posts associated with this category.
+              Are you sure you want to delete "{categoryToDelete?.name}"? 
+              {categoryToDelete && categoryToDelete.postCount && categoryToDelete.postCount > 0 ? (
+                <span className="block mt-2 text-red-600 font-medium">
+                  Warning: This category is used by {categoryToDelete.postCount} post{categoryToDelete.postCount !== 1 ? 's' : ''}. 
+                  You must remove it from all posts before deletion.
+                </span>
+              ) : (
+                <span className="block mt-2">
+                  This action cannot be undone.
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

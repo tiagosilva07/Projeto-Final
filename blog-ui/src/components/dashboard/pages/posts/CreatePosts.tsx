@@ -8,6 +8,7 @@ import { MultiSelect } from "@/components/MultiSelect";
 import { uploadImage } from "@/services/cloudinary";
 import { ImageUploader } from "@/components/ImageUploader";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import type { Category } from "@/types/categoy";
 
 export default function CreatePost() {
@@ -32,6 +33,11 @@ export default function CreatePost() {
   const [error, setError] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [errors, setErrors] = useState({
+    title: "",
+    content: "",
+    categoryIds: "",
+  });
 
   useEffect(() => {
     async function loadCategories() {
@@ -69,9 +75,47 @@ export default function CreatePost() {
   ) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    // Clear field error when user starts typing
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+    setError("");
+  }
+
+  function validateForm(): boolean {
+    const newErrors = {
+      title: "",
+      content: "",
+      categoryIds: "",
+    };
+
+    // Title validation (3-500 characters)
+    if (!form.title.trim()) {
+      newErrors.title = "Title is required";
+    } else if (form.title.trim().length < 3) {
+      newErrors.title = "Title must be at least 3 characters";
+    } else if (form.title.trim().length > 500) {
+      newErrors.title = "Title must not exceed 500 characters";
+    }
+
+    // Content validation
+    if (!form.content.trim()) {
+      newErrors.content = "Content is required";
+    }
+
+    // Category validation (at least one category required)
+    if (form.categoryIds.length === 0) {
+      newErrors.categoryIds = "Please select at least one category";
+    }
+
+    setErrors(newErrors);
+    return !newErrors.title && !newErrors.content && !newErrors.categoryIds;
   }
 
   async function handleSubmit(status: "DRAFT" | "PUBLISHED") {
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors");
+      return;
+    }
+
     console.log("TOKEN FROM CONTEXT:", token);
     setLoading(true);
     setError("");
@@ -87,9 +131,12 @@ export default function CreatePost() {
     };
       await createPost(postData);
       await refreshPosts(); // Refresh posts context
+      toast.success(`Post ${status === "DRAFT" ? "saved as draft" : "published"} successfully!`);
       navigate("/dashboard/posts");
     } catch (err) {
-      setError("Failed to create post");
+      const errorMsg = "Failed to create post";
+      setError(errorMsg);
+      toast.error(errorMsg);
       console.error(err);
     } finally {
       setLoading(false);
@@ -103,30 +150,49 @@ export default function CreatePost() {
       {error && <p className="text-red-600 mb-4">{error}</p>}
 
       <div className="space-y-4">
-        <input
-          type="text"
-          name="title"
-          placeholder="Post title"
-          className="w-full p-3 border rounded"
-          value={form.title}
-          onChange={handleChange}
-        />
+        <div>
+          <input
+            type="text"
+            name="title"
+            placeholder="Post title (3-500 characters)"
+            className="w-full p-3 border rounded"
+            value={form.title}
+            onChange={handleChange}
+          />
+          {errors.title && (
+            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+          )}
+          <p className="text-xs text-gray-500 mt-1">
+            {form.title.length}/500 characters
+          </p>
+        </div>
 
-        <textarea
-          name="content"
-          placeholder="Write your content here..."
-          className="w-full p-3 border rounded h-64"
-          value={form.content}
-          onChange={handleChange}
-        />
+        <div>
+          <textarea
+            name="content"
+            placeholder="Write your content here..."
+            className="w-full p-3 border rounded h-64"
+            value={form.content}
+            onChange={handleChange}
+          />
+          {errors.content && (
+            <p className="text-red-500 text-sm mt-1">{errors.content}</p>
+          )}
+        </div>
 
-        <MultiSelect
-          options={categories}
-          selected={form.categoryIds}
-          onChange={(value) =>
-            setForm((prev) => ({ ...prev, categoryIds: value }))
-          }
-        />
+        <div>
+          <MultiSelect
+            options={categories}
+            selected={form.categoryIds}
+            onChange={(value) => {
+              setForm((prev) => ({ ...prev, categoryIds: value }));
+              setErrors((prev) => ({ ...prev, categoryIds: "" }));
+            }}
+          />
+          {errors.categoryIds && (
+            <p className="text-red-500 text-sm mt-1">{errors.categoryIds}</p>
+          )}
+        </div>
         <ImageUploader
           previewUrl={form.imagePreview}
           onSelect={(file: File) => {
