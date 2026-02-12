@@ -44,7 +44,7 @@ public class CategoryController{
     @Operation(summary = "Get All Categories")
     @GetMapping("/categories")
     public ResponseEntity<List<CategoryResponseDTO>> getAll() {
-        return new ResponseEntity<>(categoryService.finAll(), HttpStatus.OK);
+        return new ResponseEntity<>(categoryService.findAll(), HttpStatus.OK);
     }
     @Operation(summary = "Get Category by Id", description = "Requires ADMIN role")
     @PreAuthorize("hasRole('ADMIN')")

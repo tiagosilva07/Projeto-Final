@@ -1,5 +1,6 @@
 package pt.tiago.blog.services;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import pt.tiago.blog.Dtos.AdminOverviewDTO;
 import pt.tiago.blog.Dtos.AdminUserViewDTO;
@@ -69,6 +70,8 @@ public class AdminServiceImpl implements AdminService {
         );
     }
 
+    @Override
+    @Transactional
     public void promoteUserToAdmin(Long id){
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Invalid user ID");
@@ -85,6 +88,8 @@ public class AdminServiceImpl implements AdminService {
         userRepository.save(user);
     }
 
+    @Override
+    @Transactional
     public void demoteAdminToUser(Long id){
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Invalid user ID");

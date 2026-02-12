@@ -1,5 +1,6 @@
 package pt.tiago.blog.services;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 import pt.tiago.blog.Dtos.CategoryRequestDTO;
@@ -24,6 +25,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 
     @Override
+    @Transactional
     public boolean create(CategoryRequestDTO category) {
         if (categoryRepository.existsByName(category.name())) {
             throw new ConflictException("Category already exists");
@@ -35,6 +37,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public List<CategoryResponseDTO> createBulk(List<CategoryRequestDTO> dtos) {
         List<Category> categoriesToCreate = dtos.stream()
                 .map(CategoryMapper::toDomain).toList();
@@ -45,8 +48,8 @@ public class CategoryServiceImpl implements CategoryService {
                 .toList();
     }
 
-    @GetMapping
-    public List<CategoryResponseDTO> finAll() {
+    @Override
+    public List<CategoryResponseDTO> findAll() {
 
         var list = categoryRepository.findAll()
                 .stream()
@@ -55,6 +58,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
         var find = categoryRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Category not found"));
@@ -62,6 +66,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public CategoryResponseDTO update(Long id ,CategoryRequestDTO category) {
         var categoryToUpdate = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));

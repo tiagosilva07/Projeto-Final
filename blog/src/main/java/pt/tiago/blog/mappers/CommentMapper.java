@@ -15,6 +15,7 @@ public class CommentMapper {
         comment.setAuthor(user);
         return comment;
     }
+
     public static CommentResponseDTO toDTO(Comment comment){
         return new CommentResponseDTO(
                 comment.getId(),

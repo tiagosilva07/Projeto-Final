@@ -95,7 +95,7 @@ class CategoryServiceTest {
     void shouldReturnAllCategories() {
         when(categoryRepository.findAll()).thenReturn(List.of(categoryEntity, categoryEntity2));
 
-        List<CategoryResponseDTO> result = categoryService.finAll();
+        List<CategoryResponseDTO> result = categoryService.findAll();
 
         assertEquals(2, result.size());
         assertEquals("Tech", result.get(0).name());

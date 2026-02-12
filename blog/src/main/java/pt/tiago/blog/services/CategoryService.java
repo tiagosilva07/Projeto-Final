@@ -9,7 +9,7 @@ public interface CategoryService {
     boolean create(CategoryRequestDTO category);
     void delete(Long id);
     CategoryResponseDTO update(Long id,CategoryRequestDTO category);
-    List<CategoryResponseDTO> finAll();
+    List<CategoryResponseDTO> findAll();
     List<CategoryResponseDTO> createBulk(List<CategoryRequestDTO> categories);
     CategoryResponseDTO findById(Long id);
 }

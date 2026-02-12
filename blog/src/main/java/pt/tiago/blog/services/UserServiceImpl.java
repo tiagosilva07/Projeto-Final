@@ -28,7 +28,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public UserResponseDTO findUserById(Long id){
         var user = userRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException("User not found"));
@@ -59,6 +58,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void delete(User user) {
         userRepository.delete(user);
     }

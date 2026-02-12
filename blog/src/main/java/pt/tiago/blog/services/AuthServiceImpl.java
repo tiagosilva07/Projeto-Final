@@ -1,5 +1,6 @@
 package pt.tiago.blog.services;
 
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import pt.tiago.blog.Dtos.LoginRequestDTO;
@@ -31,6 +32,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void register(UserRegistrationDTO dto) {
 
         if(userRepository.existsByUserName(dto.username())){

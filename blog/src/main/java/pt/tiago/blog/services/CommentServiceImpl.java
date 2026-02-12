@@ -53,6 +53,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public  void deleteComment(Long id) {
         var comment = commentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
@@ -60,7 +61,6 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    @Transactional
     public List<CommentResponseDTO> getAllComments() {
         var comments = commentRepository.findAll();
         return comments.stream().map(CommentMapper::toDTO).collect(Collectors.toList());

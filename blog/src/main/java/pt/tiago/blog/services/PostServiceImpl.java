@@ -37,6 +37,7 @@ public class PostServiceImpl implements PostService{
     }
 
     @Override
+    @Transactional
     public PostResponseDTO Create(PostRequestDTO dto, String username) {
         var user = userRepository.findByUserName(username).orElseThrow(
                 ()-> new ResourceNotFoundException("User not found")
@@ -65,6 +66,7 @@ public class PostServiceImpl implements PostService{
     }
 
     @Override
+    @Transactional
     public PostResponseDTO Update(Long id, PostRequestDTO dto)
     {
         Post post = postRepository.findById(id).orElseThrow(
@@ -90,6 +92,7 @@ public class PostServiceImpl implements PostService{
     }
 
     @Override
+    @Transactional
     public void delete(Long id) {
         var post = postRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Post not found"));
         postRepository.delete(post);
